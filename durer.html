@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Albrecht Dürer - Biography and Gallery">
+    <title>Albrecht Dürer | Ink Archive</title>
+    <style>
+        /* --- CSS VARIABLES --- */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #222222;
+            --card-bg: #f5f5f5;
+            --accent-color: #333333;
+            --border-color: #dddddd;
+            --sidebar-width: 280px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --accent-color: #bb86fc;
+            --border-color: #333333;
+            --shadow: 0 4px 6px rgba(0,0,0,0.5);
+        }
+
+        [data-theme="amoled"] {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --card-bg: #000000;
+            --accent-color: #ffffff;
+            --border-color: #333333;
+            --shadow: none;
+        }
+
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.noscroll { overflow: hidden; }
+
+        /* --- HEADER --- */
+        header {
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; 
+        }
+
+        h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+
+        .back-btn {
+            position: absolute; right: 10px; top: 15px;
+            text-decoration: none; color: var(--text-color);
+            font-weight: bold; font-size: 0.9rem; border: 1px solid var(--border-color);
+            padding: 4px 10px; border-radius: 4px;
+        }
+
+        .menu-btn {
+            position: absolute; top: 10px; padding: 10px;
+            cursor: pointer; background: none; border: none;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .menu-left { left: 10px; }
+        .menu-right { right: 10px; }
+
+        .bar { width: 25px; height: 3px; background-color: var(--text-color); border-radius: 2px; transition: 0.3s; }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            position: fixed; top: 0; height: 100%; width: var(--sidebar-width);
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+            display: flex; flex-direction: column;
+            padding-top: 70px;
+            overflow-y: auto; 
+        }
+
+        .sidebar.open { transform: translateX(0); }
+        .sidebar.from-right { right: 0; border-right: none; border-left: 1px solid var(--border-color); transform: translateX(100%); }
+        .sidebar.from-right.open { transform: translateX(0); }
+
+        .nav-links { list-style: none; flex-grow: 1; }
+        .nav-links li a {
+            display: block; padding: 15px 25px;
+            text-decoration: none; color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border-color); }
+        .settings-trigger {
+            width: 100%; padding: 12px;
+            background: var(--bg-color); color: var(--text-color);
+            border: 1px solid var(--border-color); cursor: pointer; font-weight: bold;
+        }
+
+        /* --- OVERLAY --- */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 998;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+        .overlay.modal-mode { z-index: 1500; }
+
+        /* --- PROFILE LAYOUT --- */
+        main { padding: 80px 20px 40px 20px; max-width: 800px; margin: 0 auto; }
+        
+        .hero { text-align: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 30px; }
+        .hero h2 { font-size: 2rem; margin-bottom: 5px; }
+        .hero-dates { display: block; opacity: 0.7; font-size: 1rem; margin-bottom: 15px; }
+        .hero-tags span { display: inline-block; padding: 4px 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; font-size: 0.8rem; margin: 0 5px; }
+
+        .section { margin-bottom: 50px; }
+        .section-title { font-size: 1.3rem; margin-bottom: 20px; border-left: 4px solid var(--text-color); padding-left: 15px; }
+        .text-content p { margin-bottom: 15px; text-align: justify; }
+
+        .list-box { background: var(--card-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .list-box ul { list-style-position: inside; }
+        .list-box li { margin-bottom: 10px; }
+
+        /* --- GALLERY GRID & SKELETON --- */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (min-width: 600px) { .gallery-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        /* Pulse Animation for Skeleton Loading */
+        @keyframes pulse {
+            0% { background-color: var(--card-bg); }
+            50% { background-color: var(--border-color); }
+            100% { background-color: var(--card-bg); }
+        }
+
+        .art-item {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .art-item.skeleton-loading {
+            animation: pulse 1.5s infinite ease-in-out;
+            min-height: 150px; /* Prevent collapse before load */
+        }
+        
+        .art-item:active { transform: scale(0.98); }
+
+        /* IMAGE STYLES - FADE IN */
+        .art-img {
+            width: 100%; 
+            aspect-ratio: 1/1; 
+            object-fit: cover; 
+            display: block;
+            background-color: #222;
+            opacity: 0; 
+            transition: opacity 0.5s ease-in;
+        }
+
+        .art-img.loaded { opacity: 1; }
+
+        .art-title {
+            padding: 10px; font-size: 0.85rem; text-align: center; font-weight: 600;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* MAGNIFYING GLASS ICON */
+        .mag-icon {
+            position: absolute;
+            bottom: 35px; right: 10px;
+            width: 30px; height: 30px;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(2px);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; pointer-events: none; 
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .mag-icon svg { width: 16px; height: 16px; fill: currentColor; }
+
+        /* --- BACK TO TOP --- */
+        .back-to-top {
+            position: fixed; bottom: 20px; left: 20px;
+            width: 45px; height: 45px;
+            background: var(--text-color); color: var(--bg-color);
+            border-radius: 50%; border: none;
+            cursor: pointer; box-shadow: var(--shadow);
+            z-index: 900;
+            opacity: 0; visibility: hidden; transform: translateY(20px);
+            transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: bold;
+        }
+        .back-to-top.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        /* --- MODAL --- */
+        .modal {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%; max-width: 400px;
+            background: var(--card-bg); padding: 25px;
+            border-radius: 12px; border: 1px solid var(--border-color);
+            z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none; max-height: 85vh; overflow-y: auto; 
+        }
+        .modal.active { display: block; }
+        .modal h2 { margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
+        .setting-group { margin-bottom: 20px; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn-option { flex: 1; padding: 10px; background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); cursor: pointer; border-radius: 4px; }
+        .btn-option.active { background: var(--text-color); color: var(--bg-color); }
+        .close-modal { width: 100%; padding: 12px; background: transparent; color: var(--text-color); border: 1px solid var(--border-color); margin-top: 10px; cursor: pointer; }
+
+        /* --- IMAGE VIEWER --- */
+        .viewer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 3000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s;
+            overflow: hidden; touch-action: none; 
+        }
+
+        .viewer-overlay.active { opacity: 1; visibility: visible; }
+
+        .viewer-container {
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; position: relative;
+        }
+
+        .viewer-img {
+            max-width: 100%; max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.1s ease-out; 
+            cursor: grab; user-select: none;
+        }
+        .viewer-img:active { cursor: grabbing; }
+
+        .viewer-loader {
+            position: absolute; color: white; font-size: 1.2rem; display: none;
+        }
+        .viewer-overlay.loading .viewer-loader { display: block; }
+        .viewer-overlay.loading .viewer-img { opacity: 0.3; }
+
+        /* Viewer Metadata Bar */
+        .viewer-info-bar {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            color: #ffffff;
+            padding: 20px 20px 80px 20px; /* Space for zoom controls */
+            z-index: 3001;
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(255,255,255,0.2);
+            transform: translateY(100%); /* Hidden */
+            transition: transform 0.3s ease-out;
+            max-height: 50%; overflow-y: auto;
+        }
+        .viewer-info-bar.active { transform: translateY(0); }
+
+        .info-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; color: #fff; }
+        .info-meta { font-size: 0.85rem; color: #ccc; margin-bottom: 10px; font-style: italic; }
+        .info-desc { font-size: 0.9rem; line-height: 1.5; color: #ddd; }
+
+        /* Info Toggle Button */
+        .info-toggle {
+            position: absolute; bottom: 20px; right: 20px;
+            background: transparent; color: white; border: 1px solid white;
+            border-radius: 50%; width: 40px; height: 40px;
+            z-index: 3002; cursor: pointer; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .viewer-controls {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 15px; z-index: 3001;
+        }
+
+        .ctrl-btn {
+            background: rgba(255, 255, 255, 0.2); color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%; width: 50px; height: 50px;
+            font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .ctrl-btn:active { background: rgba(255, 255, 255, 0.5); }
+
+        .viewer-close {
+            position: absolute; top: 20px; right: 20px;
+            background: none; border: none;
+            color: #fff; font-size: 2rem;
+            cursor: pointer; z-index: 3002; padding: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <button id="backToTop" class="back-to-top" aria-label="Back to Top">&uarr;</button>
+
+    <header>
+        <button id="hamburger" class="menu-btn menu-left" aria-label="Menu">
+            <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        </button>
+        <h1>Master Profile</h1>
+        <a href="index.html" class="back-btn">Back</a>
+    </header>
+
+    <nav id="sidebar" class="sidebar">
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="settings-trigger" id="openSettings">Settings</button>
+        </div>
+    </nav>
+
+    <div id="overlay" class="overlay"></div>
+
+    <div id="imageViewer" class="viewer-overlay">
+        <div class="viewer-loader">Loading Full Resolution...</div>
+        <button class="viewer-close" id="closeViewer">&times;</button>
+        
+        <div class="viewer-container" id="viewerContainer">
+            <img src="" alt="Full View" class="viewer-img" id="viewerImg">
+        </div>
+
+        <div id="viewerInfo" class="viewer-info-bar">
+            <div class="info-title" id="vTitle"></div>
+            <div class="info-meta" id="vMeta"></div>
+            <div class="info-desc" id="vDesc"></div>
+        </div>
+
+        <button id="toggleInfo" class="info-toggle">i</button>
+
+        <div class="viewer-controls">
+            <button class="ctrl-btn" id="zoomOut" title="Zoom Out">-</button>
+            <button class="ctrl-btn" id="resetZoom" title="Reset">R</button>
+            <button class="ctrl-btn" id="zoomIn" title="Zoom In">+</button>
+        </div>
+    </div>
+
+    <main>
+        <div class="hero">
+            <h2>Albrecht Dürer</h2>
+            <span class="hero-dates">May 21, 1471 – April 6, 1528</span>
+            <div class="hero-tags">
+                <span>Nuremberg</span><span>Printmaking</span><span>Renaissance</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Biography</h3>
+            <div class="text-content">
+                <p>Albrecht Dürer was born in the Imperial Free City of Nuremberg, Germany. The son of a goldsmith, he was apprenticed to his father at a young age, learning to work with metal and fine tools—skills that would later define his mastery of engraving. He later apprenticed with Michael Wolgemut, the leading artist in Nuremberg at the time.</p>
+                <p>Dürer traveled extensively to Italy, where he was deeply influenced by the Italian Renaissance. He bridged the gap between the Gothic style of the North and the mathematical perspective and proportion theories of the South. He served as the official court artist to Holy Roman Emperors Maximilian I and Charles V.</p>
+                <p>He is universally regarded as the greatest German artist of the Renaissance. He revolutionized printmaking, elevating it from a simple craft to an independent art form capable of high tonal range and dramatic depth.</p>
+                </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Some Famous Works</h3>
+            <div class="gallery-grid">
+                
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/4/44/Albrecht_D%C3%BCrer_-_Hare%2C_1502_-_Google_Art_Project.jpg"
+                     data-title="Young Hare"
+                     data-meta="1502 | Watercolor and bodycolor"
+                     data-desc="A masterpiece of observational art. Dürer likely sketched a wild hare in his workshop, capturing the texture of fur with almost photographic precision.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Albrecht_D%C3%BCrer_-_Hare%2C_1502_-_Google_Art_Project.jpg/400px-Albrecht_D%C3%BCrer_-_Hare%2C_1502_-_Google_Art_Project.jpg" class="art-img" alt="Young Hare" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Young Hare</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/6/63/Albrecht_D%C3%BCrer_-_Praying_Hands%2C_1508_-_Google_Art_Project.jpg"
+                     data-title="Praying Hands"
+                     data-meta="1508 | Brush and ink on blue paper"
+                     data-desc="Perhaps Dürer's most famous drawing, originally a preparatory sketch for an altarpiece. It highlights his mastery of form using white heightening on colored paper.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Albrecht_D%C3%BCrer_-_Praying_Hands%2C_1508_-_Google_Art_Project.jpg/400px-Albrecht_D%C3%BCrer_-_Praying_Hands%2C_1508_-_Google_Art_Project.jpg" class="art-img" alt="Praying Hands" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Praying Hands (1508)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://smarthistory.org/wp-content/uploads/2023/07/DP816773-scaled.jpg"
+                     data-title="The Four Horsemen of the Apocalypse"
+                     data-meta="1498 | Woodcut"
+                     data-desc="From the 'Apocalypse' series. It depicts Conquest, War, Famine, and Death riding over the people of the earth, showcasing revolutionary dynamic movement in woodcut.">
+                    <img src="https://images.fineartamerica.com/images/artworkimages/mediumlarge/3/four-horsemen-of-the-apocalypse-1498-albrecht-durer.jpg" class="art-img" alt="Four Horsemen" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Four Horsemen (1498)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://palauantiguitats.com/wp-content/uploads/2017/03/G01553.jpg"
+                     data-title="Knight, Death and the Devil"
+                     data-meta="1513 | Engraving"
+                     data-desc="One of the three 'Meisterstiche' (Master Prints). It represents the active life of the Christian soldier who rides past death and temptation without fear.">
+                    <img src="https://uploads3.wikiart.org/images/albrecht-durer/the-knight-death-and-the-devil-1513.jpg!Large.jpg" class="art-img" alt="Knight, Death & Devil" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Knight, Death & Devil (1513)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/1/18/D%C3%BCrer_Melancholia_I.jpg"
+                     data-title="Melencolia I"
+                     data-meta="1514 | Engraving"
+                     data-desc="A complex allegorical work depicting the intellectual state of melancholy. It is filled with mathematical objects, tools, and a winged genius in deep contemplation.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/D%C3%BCrer_Melancholia_I.jpg/400px-D%C3%BCrer_Melancholia_I.jpg" class="art-img" alt="Melencolia I" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Melencolia I (1514)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://www.nationalgallery.gr/wp-content/uploads/2022/03/71874_2000_2000.jpg"
+                     data-title="Saint Jerome in His Study"
+                     data-meta="1514 | Engraving"
+                     data-desc="This engraving masterfully uses light to create a serene, scholarly atmosphere. It depicts the translator of the Bible working peacefully, guarded by his lion.">
+                    <img src="https://www.nationalgallery.gr/wp-content/uploads/2022/03/71874_2000_2000-300x300.jpg" class="art-img" alt="St. Jerome in Study" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">St. Jerome in Study (1514)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://smarthistory.org/wp-content/uploads/2021/10/Durer-scaled.jpeg"
+                     data-title="Adam and Eve"
+                     data-meta="1504 | Engraving"
+                     data-desc="A study in ideal human proportions based on Vitruvian theory. The animals surrounding the figures symbolize the four humors of the body.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Albrecht_D%C3%BCrer%2C_Adam_and_Eve%2C_1504%2C_Engraving.jpg/250px-Albrecht_D%C3%BCrer%2C_Adam_and_Eve%2C_1504%2C_Engraving.jpg" class="art-img" alt="Adam and Eve" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Adam and Eve (1504)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/d/dc/Albrecht_D%C3%BCrer_-_1500_self-portrait_%28High_resolution_and_detail%29.jpg"
+                     data-title="Self-Portrait at 28"
+                     data-meta="1500 | Oil on panel"
+                     data-desc="Famous for its Christ-like frontal pose, this portrait asserts the divine nature of the artist's creativity. It is one of the most iconic images in art history.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Albrecht_D%C3%BCrer_-_1500_self-portrait_%28High_resolution_and_detail%29.jpg/400px-Albrecht_D%C3%BCrer_-_1500_self-portrait_%28High_resolution_and_detail%29.jpg" class="art-img" alt="Self-Portrait at 28" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Self-Portrait at 28 (1500)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/f/f6/Albrecht_D%C3%BCrer_-_The_Large_Piece_of_Turf%2C_1503_-_Google_Art_Project.jpg"
+                     data-title="Great Piece of Turf"
+                     data-meta="1503 | Watercolor"
+                     data-desc="A groundbreaking botanical study. Dürer treats a random patch of meadow with the same dignity and scientific detail as a religious subject.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Albrecht_D%C3%BCrer_-_The_Large_Piece_of_Turf%2C_1503_-_Google_Art_Project.jpg/400px-Albrecht_D%C3%BCrer_-_The_Large_Piece_of_Turf%2C_1503_-_Google_Art_Project.jpg" class="art-img" alt="Great Piece of Turf" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Great Piece of Turf (1503)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/b/bc/The_Rhinoceros_%28NGA_1964.8.697%29_enhanced.png"
+                     data-title="The Rhinoceros"
+                     data-meta="1515 | Woodcut"
+                     data-desc="Dürer never saw a rhinoceros; he based this on descriptions. Despite anatomical inaccuracies, it remained the standard illustration of the animal for centuries.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/The_Rhinoceros_%28NGA_1964.8.697%29_enhanced.png/400px-The_Rhinoceros_%28NGA_1964.8.697%29_enhanced.png" class="art-img" alt="The Rhinoceros" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">The Rhinoceros (1515)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/2/20/Albrecht_D%C3%BCrer_-_Portrait_of_D%C3%BCrer%27s_Father_at_70.jpg"
+                     data-title="Portrait of the Artist's Father"
+                     data-meta="1490 | Oil on panel"
+                     data-desc="Painted before Dürer left for his travels. It depicts Albrecht Dürer the Elder, a goldsmith, holding a rosary, painted with deep respect and realism.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Albrecht_D%C3%BCrer_-_Portrait_of_D%C3%BCrer%27s_Father_at_70.jpg/400px-Albrecht_D%C3%BCrer_-_Portrait_of_D%C3%BCrer%27s_Father_at_70.jpg" class="art-img" alt="Portrait of Father" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Portrait of Father (1490)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/f/f9/Albrecht_D%C3%BCrer_-_Feast_of_Rose_Garlands_-_Google_Art_Project.jpg"
+                     data-title="Feast of the Rosary"
+                     data-meta="1506 | Oil on panel"
+                     data-desc="Painted in Venice, this work proved to the Italians that Dürer was a master of color, not just printmaking. It shows the Virgin Mary distributing rose garlands.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Albrecht_D%C3%BCrer_-_Feast_of_Rose_Garlands_-_Google_Art_Project.jpg/400px-Albrecht_D%C3%BCrer_-_Feast_of_Rose_Garlands_-_Google_Art_Project.jpg" class="art-img" alt="Feast of the Rosary" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Feast of the Rosary (1506)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/6/6f/Title_page_of_the_Small_Passion_by_Albrecht_D%C3%BCrer.png"
+                     data-title="Small Passion (Title Page)"
+                     data-meta="1511 | Woodcut"
+                     data-desc="The title page of one of Dürer's most popular books. The Small Passion series made his religious imagery accessible to a wider audience through print.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Title_page_of_the_Small_Passion_by_Albrecht_D%C3%BCrer.png/400px-Title_page_of_the_Small_Passion_by_Albrecht_D%C3%BCrer.png" class="art-img" alt="Small Passion" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Small Passion (1511)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/d/d4/Albrecht_D%C3%BCrer_-_Marter_der_zehntausend_Christen_%28Yorck_Project%29.jpg"
+                     data-title="Martyrdom of the Ten Thousand"
+                     data-meta="1508 | Oil on canvas"
+                     data-desc="Commissioned by Frederick the Wise, this crowded scene depicts a legendary massacre. Dürer included a self-portrait of himself in the center holding a banner.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Albrecht_D%C3%BCrer_-_Marter_der_zehntausend_Christen_%28Yorck_Project%29.jpg/400px-Albrecht_D%C3%BCrer_-_Marter_der_zehntausend_Christen_%28Yorck_Project%29.jpg" class="art-img" alt="Martyrdom of 10,000" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Martyrdom of 10,000 (1508)</div>
+                </div>
+
+                <div class="art-item skeleton-loading" 
+                     data-full-res="https://upload.wikimedia.org/wikipedia/commons/0/0c/Albrecht_D%C3%BCrer_089b.jpg"
+                     data-title="Portrait of a Venetian Woman"
+                     data-meta="1505 | Oil on panel"
+                     data-desc="Painted during his second trip to Italy. The soft modeling of the face and the warmth of the colors show the strong influence of Venetian painters like Bellini.">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Albrecht_D%C3%BCrer_089b.jpg/400px-Albrecht_D%C3%BCrer_089b.jpg" class="art-img" alt="Venetian Woman" loading="lazy" onload="imgLoaded(this)">
+                    <div class="mag-icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div>
+                    <div class="art-title">Venetian Woman (1505)</div>
+                </div>
+                
+            </div>
+        </div>
+
+    </main>
+
+    <div id="settingsModal" class="modal">
+        <h2>Appearance</h2>
+        <div class="setting-group">
+            <label>Theme</label>
+            <div class="btn-group">
+                <button class="btn-option" onclick="setTheme('light')">Light</button>
+                <button class="btn-option" onclick="setTheme('dark')">Dark</button>
+                <button class="btn-option" onclick="setTheme('amoled')">AMOLED</button>
+            </div>
+        </div>
+        <div class="setting-group">
+            <label>Menu Position</label>
+            <div class="btn-group">
+                <button class="btn-option" onclick="setMenuPos('left')">Left</button>
+                <button class="btn-option" onclick="setMenuPos('right')">Right</button>
+            </div>
+        </div>
+        <button class="close-modal" id="closeSettings">Close</button>
+    </div>
+
+    <script>
+        // --- ELEMENTS ---
+        const els = {
+            ham: document.getElementById('hamburger'),
+            bar: document.getElementById('sidebar'),
+            ovl: document.getElementById('overlay'),
+            mod: document.getElementById('settingsModal'),
+            bod: document.body,
+            // Viewer Elements
+            viewer: document.getElementById('imageViewer'),
+            viewerImg: document.getElementById('viewerImg'),
+            closeViewer: document.getElementById('closeViewer'),
+            viewerContainer: document.getElementById('viewerContainer'),
+            zoomIn: document.getElementById('zoomIn'),
+            zoomOut: document.getElementById('zoomOut'),
+            resetZoom: document.getElementById('resetZoom')
+        };
+
+        // --- CORE UI LOGIC ---
+        function toggleLock(forceActive) {
+            // Locks body scroll if any modal (settings or viewer) is open
+            if (forceActive || els.ovl.classList.contains('active') || els.viewer.classList.contains('active')) {
+                els.bod.classList.add('noscroll');
+            } else {
+                els.bod.classList.remove('noscroll');
+            }
+        }
+
+        function toggleMenu() {
+            if (els.mod.classList.contains('active')) return;
+            els.bar.classList.toggle('open');
+            if (!els.mod.classList.contains('active')) {
+                els.ovl.classList.toggle('active');
+                els.ovl.classList.remove('modal-mode');
+                toggleLock(); 
+            }
+        }
+
+        // Settings Modal Listeners
+        document.getElementById('openSettings').addEventListener('click', () => {
+            els.bar.classList.remove('open');
+            els.mod.classList.add('active');
+            els.ovl.classList.add('active');
+            els.ovl.classList.add('modal-mode');
+            toggleLock(true); 
+        });
+
+        document.getElementById('closeSettings').addEventListener('click', () => {
+            closeModal();
+        });
+
+        function closeModal() {
+            els.mod.classList.remove('active');
+            els.ovl.classList.remove('active');
+            els.ovl.classList.remove('modal-mode');
+            toggleLock(false);
+        }
+
+        els.ovl.addEventListener('click', () => {
+            if (els.mod.classList.contains('active')) {
+                closeModal();
+            } else {
+                els.bar.classList.remove('open');
+                els.ovl.classList.remove('active');
+                toggleLock(false);
+            }
+        });
+
+        els.ham.addEventListener('click', toggleMenu);
+
+        // --- PREFERENCES LOGIC ---
+        function setTheme(t) {
+            document.documentElement.setAttribute('data-theme', t);
+            localStorage.setItem('theme', t);
+            updateUI();
+        }
+
+        function setMenuPos(p) {
+            const wasOpen = els.bar.classList.contains('open');
+            els.ham.className = `menu-btn menu-${p}`; 
+            els.bar.className = `sidebar ${p === 'right' ? 'from-right' : ''}`;
+            if(wasOpen) els.bar.classList.add('open'); 
+            localStorage.setItem('menuPos', p);
+            updateUI();
+        }
+
+        function updateUI() {
+            const t = localStorage.getItem('theme') || 'light';
+            const p = localStorage.getItem('menuPos') || 'left';
+            document.querySelectorAll('.btn-option').forEach(btn => {
+                const attr = btn.getAttribute('onclick');
+                btn.classList.toggle('active', attr.includes(`'${t}'`) || attr.includes(`'${p}'`));
+            });
+        }
+
+        // --- SKELETON LOAD HANDLER ---
+        function imgLoaded(img) {
+            img.classList.add('loaded');
+            // Remove skeleton pulse from parent container
+            img.parentElement.classList.remove('skeleton-loading');
+        }
+
+        // --- BACK TO TOP LOGIC ---
+        const backBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backBtn.classList.add('visible');
+            } else {
+                backBtn.classList.remove('visible');
+            }
+        });
+        backBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // --- IMAGE VIEWER LOGIC ---
+        
+        // Variables for Zoom/Pan
+        let state = {
+            scale: 1,
+            panning: false,
+            pointX: 0,
+            pointY: 0,
+            startX: 0,
+            startY: 0
+        };
+
+        // Viewer Info Elements
+        const vInfo = document.getElementById('viewerInfo');
+        const vTitle = document.getElementById('vTitle');
+        const vMeta = document.getElementById('vMeta');
+        const vDesc = document.getElementById('vDesc');
+        const toggleInfoBtn = document.getElementById('toggleInfo');
+
+        // Setup Click Listeners on Gallery ITEMS
+        document.querySelectorAll('.art-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Get Metadata
+                const fullResUrl = this.getAttribute('data-full-res');
+                const title = this.getAttribute('data-title') || "Untitled";
+                const meta = this.getAttribute('data-meta') || "";
+                const desc = this.getAttribute('data-desc') || "No description available.";
+
+                // Populate Info
+                vTitle.textContent = title;
+                vMeta.textContent = meta;
+                vDesc.textContent = desc;
+                
+                if (fullResUrl) {
+                    openViewer(fullResUrl);
+                }
+            });
+        });
+
+        // Toggle Info Bar
+        toggleInfoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            vInfo.classList.toggle('active');
+        });
+
+        function openViewer(src) {
+            els.viewer.classList.add('active');
+            toggleLock(true);
+            
+            // Show loading state
+            els.viewer.classList.add('loading');
+            els.viewerImg.src = ""; 
+
+            // Create temp image to load in background
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                els.viewerImg.src = src;
+                els.viewer.classList.remove('loading');
+                resetState(); 
+            };
+            tempImg.src = src;
+        }
+
+        els.closeViewer.addEventListener('click', () => {
+            els.viewer.classList.remove('active');
+            vInfo.classList.remove('active'); // Close info bar
+            toggleLock(false);
+        });
+
+        // Zoom Functions
+        function updateTransform() {
+            els.viewerImg.style.transform = `translate(${state.pointX}px, ${state.pointY}px) scale(${state.scale})`;
+        }
+
+        function resetState() {
+            state.scale = 1;
+            state.pointX = 0;
+            state.pointY = 0;
+            updateTransform();
+        }
+
+        els.zoomIn.addEventListener('click', () => {
+            state.scale += 0.5; 
+            updateTransform();
+        });
+
+        els.zoomOut.addEventListener('click', () => {
+            if (state.scale > 0.6) {
+                state.scale -= 0.5;
+                if (state.scale <= 1) { state.pointX = 0; state.pointY = 0; }
+                updateTransform();
+            }
+        });
+
+        els.resetZoom.addEventListener('click', resetState);
+
+        // Pan/Move Logic (Mouse & Touch)
+        function onPointerDown(e) {
+            if (state.scale <= 1) return; 
+            e.preventDefault();
+            state.panning = true;
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            state.startX = clientX - state.pointX;
+            state.startY = clientY - state.pointY;
+            els.viewerImg.style.transition = 'none'; 
+        }
+
+        function onPointerMove(e) {
+            if (!state.panning) return;
+            e.preventDefault();
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            state.pointX = clientX - state.startX;
+            state.pointY = clientY - state.startY;
+            updateTransform();
+        }
+
+        function onPointerUp() {
+            state.panning = false;
+            els.viewerImg.style.transition = 'transform 0.1s ease-out'; 
+        }
+
+        // Attach Drag Events
+        const img = els.viewerImg;
+        
+        img.addEventListener('mousedown', onPointerDown);
+        window.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
+        
+        img.addEventListener('touchstart', onPointerDown);
+        window.addEventListener('touchmove', onPointerMove, { passive: false });
+        window.addEventListener('touchend', onPointerUp);
+
+        // Init preferences on load
+        setTheme(localStorage.getItem('theme') || 'light');
+        setMenuPos(localStorage.getItem('menuPos') || 'left');
+    </script>
+</body>
+</html>
